@@ -19,6 +19,7 @@ This project turns your monitor and Raspberry Pi into a simple, skinnable time a
         * [Installing Unclutter](#hidingCursor)
         * [Installing Midori](#installingMidori)
         * [Auto-starting Unclutter and Midori](#autoStartingMidori)
+		* [Rotate Screen](#rotateScreen)
     - [Scheduling screen sleep](#scheduling)
 + [Changing the skin](#changingTheSkin)
 + [Creating skins](#creatingSkins)
@@ -77,15 +78,17 @@ This project is not distributed with its dependencies; however, [Bower](http://b
 Open `js/weather.js` and find the following section at the top:
 
 ```javascript
-// Your Yahoo WOEID code
-// Find your WOEID code at http://zourbuth.com/tools/woeid/
-var woeid = 23416998;
+// Your openweather api key 
+var api_key = 23416998123343434254545;
+
+// your zip code
+var zip_code = '12345'
 
 // Your temperature unit measurement
 // This bit is simple, 'c' for Celcius, and 'f' for Fahrenheit
 var unit = 'c';
 
-// Yahoo! query interval (milliseconds)
+// query interval (milliseconds)
 // Default is every 15 minutes. Be reasonable. Don't query Yahoo every 500ms.
 var waitBetweenWeatherQueriesMS = 900000;
 ```
@@ -117,33 +120,37 @@ Unclutter causes the mouse cursor to disappear when the mouse isn't being moved.
 #### <a name="installingMidori"></a>Installing Midori
 
 Midori is used for its compatibility with multiple RPi generations and reasonably solid rendering. Other browsers may be used if preferred using much the same strategy.
+Matchbox is a window manager that helps us display browser in a window.
 
-`sudo apt-get install midori`
+`sudo apt-get update && sudo apt-get install -y midori matchbox`
 
 #### <a name="autoStartingMidori"></a>Auto-starting Unclutter and Midori
 
-1. Create a new directory at `~/.config/autostart` if it does not exist
-2. `cd ~/.config/autostart` - cd into this directory
-3. `nano unclutterAuto.desktop` - Create a new .desktop file
-4. Add the following lines and save. Customize the file path to where this project's index.html lives on your Pi.
-
-	```
-	[Desktop Entry]
-	Type=Application
-	Exec=unclutter -idle 0.1
-	```
-5. `nano midoriAuto.desktop` - Create a new .desktop file
-
-	```
-	[Desktop Entry]
-	Type=Application
-	Exec=midori -e Fullscreen -a file:///home/pi/Pi-Kitchen-Dashboard/index.html
-	```
+1. Update `startMidori.sh` script with the correct path to `index.html`
+2. Update file permissions `sudo chmod +x startMidori.sh`
+3. Test `sudo xinit ./startMidori.sh`
+4. Autostart when Raspberry Pi starts
+ 1. In `sudo nano /etc/rc.local` add the following code before `exit 0` - `sudo xinit /home/pi/startMidori.sh &` 
 
 Your Pi should now atomatically start kiosk mode and show the dashboard full screen once your desktop loads.
 
 If your time or date are incorrect, use `sudo raspi-config` to set your locale and timezone.
 
+#### <a name="rotateScreen"></a>Rotate Screen
+1. Open the config.txt file with the Nano editor
+ 1. `sudo vi /boot/config.txt`
+2. Add the following test at the beginning of the `config.txt` file.
+ 1. `display_rotate=2` 
+ 2. other options 
+ ```
+ display_rotate=0 Normal
+ display_rotate=1 90 degrees
+ display_rotate=2 180 degrees
+ display_rotate=3 270 degrees
+ display_rotate=0x10000 Mirror horizontal
+ display_rotate=0x20000 Mirror vertical
+ ```
+3. `sudo reboot`
 ### <a name="scheduling"></a>Scheduling screen sleep
 
 If you don't want your display to run 24/7, you can use cron jobs to fire a pair of included bash scripts: screenOff.sh and screenOn.sh. Please ensure you've completed the [Disallowing screen sleep](#disallowingScreenSleep) step above in order to keep the display always on during the times it's scheduled to be on.
