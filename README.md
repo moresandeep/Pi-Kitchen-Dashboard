@@ -17,9 +17,8 @@ This project turns your monitor and Raspberry Pi into a simple, skinnable time a
     - [Configuring your Pi](#configuringYourPi)
         * [Disallowing screen sleep](#disallowingScreenSleep)
         * [Installing Unclutter](#hidingCursor)
-        * [Installing Midori](#installingMidori)
-        * [Auto-starting Unclutter and Midori](#autoStartingMidori)
 		* [Rotate Screen](#rotateScreen)
+		* [Kiosk Mode](#kiosk)
     - [Scheduling screen sleep](#scheduling)
 + [Changing the skin](#changingTheSkin)
 + [Creating skins](#creatingSkins)
@@ -117,24 +116,35 @@ Unclutter causes the mouse cursor to disappear when the mouse isn't being moved.
 
 `sudo apt-get install unclutter`
 
-#### <a name="installingMidori"></a>Installing Midori
 
-Midori is used for its compatibility with multiple RPi generations and reasonably solid rendering. Other browsers may be used if preferred using much the same strategy.
-Matchbox is a window manager that helps us display browser in a window.
+#### <a name="kiosk"></a>Kiosk Mode
 
-`sudo apt-get update && sudo apt-get install -y midori matchbox`
+1. Update `kiosk.sh` script with the correct path to `index.html` and correct user
+2. Update file permissions `sudo chmod +x kiosk.sh`
 
-#### <a name="autoStartingMidori"></a>Auto-starting Unclutter and Midori
+##### <a name="startAtBoot"></a>Setup Kiosk at Boot
+* Create a kiosk service `sudo vi /lib/systemd/system/kiosk.service` make sure to update the `DISPLAY` and `user` values
+```
+[Unit]
+Description=Chromium Kiosk
+Wants=graphical.target
+After=graphical.target
 
-1. Update `startMidori.sh` script with the correct path to `index.html`
-2. Update file permissions `sudo chmod +x startMidori.sh`
-3. Test `sudo xinit ./startMidori.sh`
-4. Autostart when Raspberry Pi starts
- 1. In `sudo nano /etc/rc.local` add the following code before `exit 0` - `sudo xinit /home/pi/startMidori.sh &` 
+[Service]
+Environment=DISPLAY=:0.0
+Environment=XAUTHORITY=/home/<user>/.Xauthority
+Type=simple
+ExecStart=/bin/bash /home/<user>/dev/kiosk.sh
+Restart=on-abort
+User=<user>
+Group=<user>
 
-Your Pi should now atomatically start kiosk mode and show the dashboard full screen once your desktop loads.
-
-If your time or date are incorrect, use `sudo raspi-config` to set your locale and timezone.
+[Install]
+WantedBy=graphical.target
+```
+* Enable kiso service on boot `sudo systemctl enable kiosk.service`
+* Start the service `sudo systemctl start kiosk.service`
+* Check service status `sudo systemctl status kiosk.service`
 
 #### <a name="rotateScreen"></a>Rotate Screen
 1. Open the config.txt file with the Nano editor
@@ -183,8 +193,14 @@ Weather icons by Lukas Bischoff and Erik Flowers https://github.com/erikflowers/
 
 Time formatting by [Moment.js](http://momentjs.com/)  
 
-Weather data retrieved using Yahoo! Weather API.  
+Weather data retrieved using Yahoo! Weather API.
 
 Default skin responsiveness by [RYJASM](https://github.com/ryjasm).
 
 Project is under [MIT license](http://choosealicense.com/licenses/mit/).  
+
+
+## Troubleshooting
+
+* In case you decide to create a new user and not use `pi` user and are using HDMI make sure you add `video` group to your user
+	* `sudo usermod -aG video <username>`
